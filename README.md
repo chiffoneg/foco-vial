@@ -4,7 +4,7 @@ TP4 de Ciencia de Datos Aplicada (ITBA) · Matías Chiffone Guarde, María Cande
 
 Estima si un siniestro vial que ya ocurrió en CABA terminó leve o grave/mortal, con el Random Forest del TP3. Es una herramienta académica de apoyo: no predice accidentes ni reemplaza la atención de emergencias.
 
-**Página:** https://chiffoneg.github.io/foco-vial/ · **API:** https://COMPLETAR.onrender.com/docs
+**Página:** https://chiffoneg.github.io/foco-vial/ · **API:** https://foco-vial-api.onrender.com/docs
 
 ## Cómo funciona
 
