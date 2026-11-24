@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Foco Vial · Severidad de siniestros viales en CABA</title>
 <meta name="description" content="Herramienta académica que estima la severidad registrada de un siniestro vial ya ocurrido en la Ciudad de Buenos Aires.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Foco Vial · ¿Ese siniestro terminó en lesiones graves?">
+<meta property="og:description" content="Estimá la severidad de un siniestro vial en CABA con un modelo entrenado con 65.738 casos de 2019 a 2025.">
+<meta property="og:url" content="https://chiffoneg.github.io/foco-vial/">
+<meta property="og:image" content="https://chiffoneg.github.io/foco-vial/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="es_AR">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%278%27 fill=%27%2315171C%27/%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%276%27 fill=%27%23F2B705%27/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -115,8 +124,11 @@
   .scale-ticks span:first-child { transform: none; }
   .scale-ticks span:last-child { transform: translateX(-100%); }
   .scale-ticks .thr-label { color: var(--alert); }
+  .pct { margin: 10px 0 0; font-size: 14px; }
+  .pct b { font-weight: 600; }
   .r-section { margin-top: 20px; }
   .r-section h4 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
+  .r-section .r-sub { font-size: 13px; color: var(--muted); margin: -4px 0 8px; }
   .r-section ul { margin: 0; padding-left: 18px; }
   .r-section li { margin: 4px 0; font-size: 15px; }
   .warn { background: var(--signal-soft); border-left: 3px solid var(--signal); padding: 10px 12px; font-size: 14px; margin: 6px 0; border-radius: 0; }
@@ -165,7 +177,9 @@
   .limit p { margin: 0; font-size: 14px; color: var(--muted); }
 
   footer { border-top: 1px solid var(--line); padding: 28px 0 40px; font-size: 13px; color: var(--muted); }
-  footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  footer .wrap { display: flex; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; }
+  footer .foot-links { width: 100%; }
+  footer .foot-links a { color: var(--ink); }
 
   @media (max-width: 900px) {
     nav.links { display: none; }
@@ -210,7 +224,7 @@
       <div class="fact"><b>65.738</b><span>siniestros de 2019 a 2025</span></div>
       <div class="fact"><b>5,6%</b><span>terminaron graves o mortales</span></div>
       <div class="fact"><b id="fact-recall">58%</b><span>de los graves de 2025 detectados</span></div>
-      <div class="fact"><b>2,3×</b><span>mejor que elegir al azar</span></div>
+      <div class="fact"><b>2,3×</b><span>mejor que el azar para encontrar casos graves</span></div>
     </div>
   </div>
 
@@ -308,6 +322,7 @@
   <div class="wrap">
     <span>Foco Vial · Matías Chiffone Guarde · María Candelaria Terán Ortiz · Olivia Vella Delgado</span>
     <span>Datos: Buenos Aires Data, Observatorio de Movilidad y Seguridad Vial (GCBA). Proyecto académico.</span>
+    <span class="foot-links"><a id="link-api" href="https://foco-vial-api.onrender.com/docs" target="_blank" rel="noopener">API (documentación)</a> · <a href="https://github.com/chiffoneg/foco-vial" target="_blank" rel="noopener">Código en GitHub</a></span>
   </div>
 </footer>
 
@@ -470,7 +485,10 @@
       '<div class="scale-label"><span>Puntaje de gravedad</span><b>' + dec(p, 2) + "</b></div>" +
       '<div class="scale" role="img" aria-label="Puntaje ' + dec(p, 2) + " sobre 1, umbral " + dec(u, 2) + '"><div class="fill" style="width:0"></div><div class="thr" style="left:calc(' + (u * 100) + '% - 1px)"></div></div>' +
       '<div class="scale-ticks"><span style="left:0">0</span><span class="thr-label" style="left:' + (u * 100) + '%">umbral ' + dec(u, 2) + '</span><span style="left:100%">1</span></div>' +
-      (factores ? '<div class="r-section"><h4>Qué se asocia con más gravedad en este caso</h4><ul>' + factores + "</ul></div>" : "") +
+      (r.percentil_2025 != null ? '<p class="pct">Más alto que el <b>' + r.percentil_2025 + '%</b> de los siniestros de 2025.</p>' : "") +
+      (factores ? '<div class="r-section"><h4>Qué se asocia con más gravedad en este caso</h4>' +
+        (r.tasa_general_2019_2024 ? '<p class="r-sub">En los siniestros de 2019 a 2024. En general, el ' + dec(r.tasa_general_2019_2024 * 100, 1) + "% terminó grave o mortal.</p>" : "") +
+        "<ul>" + factores + "</ul></div>" : "") +
       (adv ? '<div class="r-section"><h4>Advertencias</h4>' + adv + "</div>" : "") +
       '<p class="note">' + esc(r.nota_puntaje || "") + " Herramienta de apoyo para priorizar: no reemplaza la evaluación de una emergencia.</p>" +
       '<details class="raw"><summary>Ver lo que viajó entre la página y la API</summary><div class="raw-grid">' +
@@ -527,6 +545,7 @@
     });
   });
 
+  $("link-api").href = API + "/docs";
   conectar();
 })();
 </script>

@@ -121,6 +121,58 @@ def preparar_features(entrada: dict) -> pd.DataFrame:
     return pd.DataFrame([registro], columns=esperadas)
 
 
+# Nombres claros para los factores que se muestran al usuario.
+_NOMBRES_FACTORES = {
+    "modo_victima": {"PEATON": "Víctima peatón", "MOTO": "Víctima en moto", "BICICLETA": "Víctima en bicicleta"},
+    "contraparte": {"OBJETO FIJO": "Choque contra un objeto fijo", "CAMION": "Choque con un camión",
+                    "MOTO": "Choque con una moto", "TRANSPORTE PUBLICO": "Choque con transporte público"},
+    "tipo_de_via": {"AUTOPISTA": "Autopista", "AV. GRAL. PAZ": "Av. General Paz"},
+    "franja_horaria": {"MADRUGADA": "Madrugada (de 0 a 5 h)"},
+}
+
+
+def _franja(hora: int) -> str:
+    return "MADRUGADA" if hora <= 5 else "MANANA" if hora <= 11 else "TARDE" if hora <= 17 else "NOCHE"
+
+
+def _pct(x: float) -> str:
+    return f"{x * 100:.1f}".replace(".", ",") + "%"
+
+
+def factores_asociados(entrada: dict) -> list[str]:
+    """Características del siniestro con más casos graves que el promedio, con su porcentaje histórico.
+
+    Son tasas observadas en los siniestros de 2019 a 2024 (datos de entrenamiento): asociaciones
+    generales, no la explicación de cómo decidió el Random Forest ni causas.
+    Se muestra un factor si su tasa es al menos 1,2 veces la tasa general.
+    """
+    meta = cargar_metadata()
+    tasas, general = meta.get("tasas_grave_por_categoria_2019_2024", {}), meta.get("tasa_grave_general_2019_2024")
+    if not tasas or not general:
+        return []
+    valores = {
+        "modo_victima": entrada.get("modo_victima"),
+        "contraparte": entrada.get("contraparte"),
+        "tipo_de_via": entrada.get("tipo_de_via"),
+        "franja_horaria": _franja(int(entrada["hora"])),
+    }
+    factores = []
+    for campo, valor in valores.items():
+        nombre = _NOMBRES_FACTORES.get(campo, {}).get(valor)
+        dato = tasas.get(campo, {}).get(valor)
+        if nombre and dato and dato["tasa"] >= 1.2 * general:
+            factores.append((dato["tasa"], f"{nombre}: {_pct(dato['tasa'])} terminó grave o mortal."))
+    return [texto for _, texto in sorted(factores, reverse=True)]
+
+
+def percentil_2025(score: float) -> int | None:
+    """Porcentaje de los siniestros de 2025 con un puntaje menor a este."""
+    cuantiles = cargar_metadata().get("cuantiles_puntaje_2025")
+    if not cuantiles:
+        return None
+    return int(np.searchsorted(np.asarray(cuantiles), score, side="right")) - 1 if score >= cuantiles[0] else 0
+
+
 def evaluar(entrada: dict) -> dict:
     """Ejecuta el pipeline ya entrenado, sin reentrenar ni modificar el umbral."""
     entrada = entrada.copy()
@@ -149,18 +201,12 @@ def evaluar(entrada: dict) -> dict:
     umbral = float(meta.get("umbral_clasificacion", 0.5))
     clase = "GRAVE_O_MORTAL" if score >= umbral else "LEVE"
 
-    # Asociaciones GENERALES respaldadas por los análisis TP2/TP3; no son explicaciones locales del Random Forest.
-    asociaciones = []
-    if entrada["modo_victima"] == "PEATON":
-        asociaciones.append("Peatones: mayor severidad observada en el EDA histórico.")
-    if entrada["modo_victima"] == "MOTO":
-        asociaciones.append("Motocicletas: asociación positiva con la severidad en el TP3.")
-    if entrada["tipo_de_via"] == "AUTOPISTA":
-        asociaciones.append("Autopistas: mayor proporción histórica de graves o mortales que en calles.")
-    if entrada["contraparte"] == "OBJETO FIJO":
-        asociaciones.append("Objeto fijo: asociación positiva en la Regresión Logística del TP3.")
+    asociaciones = factores_asociados(entrada)
+    percentil = percentil_2025(score)
     return {
         "puntaje_gravedad": round(score, 6),
+        "percentil_2025": percentil,
+        "tasa_general_2019_2024": cargar_metadata().get("tasa_grave_general_2019_2024"),
         "umbral": umbral,
         "clasificacion": clase,
         "etiqueta": "Alerta de gravedad" if clase == "GRAVE_O_MORTAL" else "Clasificado como leve",

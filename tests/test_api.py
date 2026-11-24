@@ -130,3 +130,17 @@ def test_combinacion_inexistente_muestra_advertencia():
 def test_combinacion_valida_no_advierte():
     r = cliente.post("/predecir", json={**CASO, "comuna": 12, "tipo_de_via": "AV. GRAL. PAZ"})
     assert not any("no tiene siniestros registrados" in s for s in r.json()["advertencias"])
+
+
+def test_factores_con_porcentajes_y_sin_jerga():
+    d = cliente.post("/predecir", json=CASO).json()   # peatón, autopista, 3 h
+    texto = " ".join(d["asociaciones_generales"])
+    assert "Víctima peatón" in texto and "Autopista" in texto and "Madrugada" in texto
+    assert "%" in texto and "EDA" not in texto and "TP3" not in texto
+
+
+def test_percentil_del_puntaje():
+    alto = cliente.post("/predecir", json=CASO).json()
+    bajo = cliente.post("/predecir", json={**CASO, "modo_victima": "SIN_DATO", "contraparte": "SIN_DATO",
+                                              "tipo_de_via": "CALLE", "hora": 13}).json()
+    assert 0 <= bajo["percentil_2025"] < alto["percentil_2025"] <= 100

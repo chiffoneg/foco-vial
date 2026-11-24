@@ -11,7 +11,7 @@ Estima si un siniestro vial que ya ocurrió en CABA terminó leve o grave/mortal
 Página web (`docs/`, GitHub Pages) → API FastAPI (`api/`, Render) → modelo del TP3 (`modelo/`).
 
 **Entrada** (`POST /predecir`): fecha, hora, comuna, tipo de vía, modo de la víctima, contraparte y coordenadas opcionales.
-**Salida:** puntaje de gravedad, clasificación (leve o grave/mortal), factores asociados y advertencias. Los datos inválidos devuelven error 422 con el motivo.
+**Salida:** puntaje de gravedad, su posición frente a los siniestros de 2025, clasificación (leve o grave/mortal), factores asociados con su porcentaje histórico y advertencias. Los datos inválidos devuelven error 422 con el motivo.
 
 ## Correrlo en la computadora
 
@@ -19,5 +19,5 @@ Página web (`docs/`, GitHub Pages) → API FastAPI (`api/`, Render) → modelo 
 pip install -r requirements.txt
 uvicorn api.main:app --reload          # API en http://127.0.0.1:8000/docs
 cd docs && python -m http.server 8080  # página en http://localhost:8080 (otra terminal)
-python -m pytest -q                    # 12 pruebas
+python -m pytest -q                    # 17 pruebas
 ```

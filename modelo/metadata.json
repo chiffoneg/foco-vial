@@ -120,5 +120,232 @@
       "CALLE"
     ]
   },
-  "vias_por_comuna_regla": "Combinaciones comuna x tipo de vía con al menos 5 siniestros en los datos de entrenamiento (2019 a 2024). Se usan para advertir combinaciones que no existen en la Ciudad o que son errores de carga."
+  "vias_por_comuna_regla": "Combinaciones comuna x tipo de vía con al menos 5 siniestros en los datos de entrenamiento (2019 a 2024). Se usan para advertir combinaciones que no existen en la Ciudad o que son errores de carga.",
+  "tasa_grave_general_2019_2024": 0.0536,
+  "tasas_grave_por_categoria_2019_2024": {
+    "modo_victima": {
+      "AUTO": {
+        "tasa": 0.0424,
+        "n": 5826
+      },
+      "BICICLETA": {
+        "tasa": 0.0389,
+        "n": 5817
+      },
+      "MOTO": {
+        "tasa": 0.0725,
+        "n": 19795
+      },
+      "OTRO": {
+        "tasa": 0.0379,
+        "n": 1319
+      },
+      "PEATON": {
+        "tasa": 0.1071,
+        "n": 7677
+      },
+      "SIN_DATO": {
+        "tasa": 0.0024,
+        "n": 9505
+      },
+      "TAXI": {
+        "tasa": 0.0136,
+        "n": 660
+      },
+      "TRANSPORTE PUBLICO": {
+        "tasa": 0.0199,
+        "n": 2813
+      },
+      "UTILITARIO": {
+        "tasa": 0.0451,
+        "n": 576
+      }
+    },
+    "contraparte": {
+      "AUTO": {
+        "tasa": 0.0571,
+        "n": 23755
+      },
+      "CAMION": {
+        "tasa": 0.1099,
+        "n": 1948
+      },
+      "MOTO": {
+        "tasa": 0.0904,
+        "n": 2811
+      },
+      "MOVIL": {
+        "tasa": 0.0424,
+        "n": 566
+      },
+      "OBJETO FIJO": {
+        "tasa": 0.2226,
+        "n": 1213
+      },
+      "OTRO": {
+        "tasa": 0.078,
+        "n": 974
+      },
+      "SIN_DATO": {
+        "tasa": 0.0097,
+        "n": 12627
+      },
+      "TAXI": {
+        "tasa": 0.0273,
+        "n": 2273
+      },
+      "TRANSPORTE PUBLICO": {
+        "tasa": 0.0803,
+        "n": 4792
+      },
+      "UTILITARIO": {
+        "tasa": 0.0432,
+        "n": 3029
+      }
+    },
+    "tipo_de_via": {
+      "AUTOPISTA": {
+        "tasa": 0.1319,
+        "n": 766
+      },
+      "AV. GRAL. PAZ": {
+        "tasa": 0.0665,
+        "n": 2361
+      },
+      "AVENIDA": {
+        "tasa": 0.0588,
+        "n": 24452
+      },
+      "CALLE": {
+        "tasa": 0.0415,
+        "n": 14206
+      },
+      "SIN_DATO": {
+        "tasa": 0.05,
+        "n": 12203
+      }
+    },
+    "franja_horaria": {
+      "MADRUGADA": {
+        "tasa": 0.1099,
+        "n": 4339
+      },
+      "MANANA": {
+        "tasa": 0.0549,
+        "n": 13161
+      },
+      "TARDE": {
+        "tasa": 0.0417,
+        "n": 21775
+      },
+      "NOCHE": {
+        "tasa": 0.0519,
+        "n": 14636
+      }
+    }
+  },
+  "cuantiles_puntaje_2025": [
+    0.003382,
+    0.011679,
+    0.014918,
+    0.017796,
+    0.021825,
+    0.025534,
+    0.030529,
+    0.037136,
+    0.045339,
+    0.064657,
+    0.11924,
+    0.142672,
+    0.154487,
+    0.166276,
+    0.177109,
+    0.187009,
+    0.195679,
+    0.204493,
+    0.213482,
+    0.220713,
+    0.227668,
+    0.233998,
+    0.241843,
+    0.24975,
+    0.256088,
+    0.261639,
+    0.267621,
+    0.273112,
+    0.280364,
+    0.286519,
+    0.293419,
+    0.301219,
+    0.30795,
+    0.31432,
+    0.321228,
+    0.328025,
+    0.337133,
+    0.345904,
+    0.355634,
+    0.365257,
+    0.373951,
+    0.382395,
+    0.391762,
+    0.399355,
+    0.406215,
+    0.413347,
+    0.420817,
+    0.425612,
+    0.430849,
+    0.434837,
+    0.43849,
+    0.4418,
+    0.445005,
+    0.44761,
+    0.450231,
+    0.452796,
+    0.455507,
+    0.457923,
+    0.460709,
+    0.46287,
+    0.465079,
+    0.468233,
+    0.471561,
+    0.47396,
+    0.476801,
+    0.479846,
+    0.483238,
+    0.48639,
+    0.489956,
+    0.494131,
+    0.498232,
+    0.502674,
+    0.506587,
+    0.511403,
+    0.51698,
+    0.52214,
+    0.527516,
+    0.533074,
+    0.540665,
+    0.547794,
+    0.554183,
+    0.561592,
+    0.568328,
+    0.576118,
+    0.58306,
+    0.590701,
+    0.59843,
+    0.606327,
+    0.612892,
+    0.620488,
+    0.628078,
+    0.637023,
+    0.64568,
+    0.655381,
+    0.670025,
+    0.687737,
+    0.705799,
+    0.726851,
+    0.754273,
+    0.788022,
+    0.93969
+  ],
+  "cuantiles_puntaje_2025_nota": "Cuantiles 0 a 100 del puntaje del modelo sobre los 11.750 siniestros de 2025. Se usan solo para expresar el puntaje como posición relativa; no intervienen en el entrenamiento ni en la clasificación."
 }
