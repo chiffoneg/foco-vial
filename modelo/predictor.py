@@ -45,6 +45,27 @@ def opciones_categoricas() -> dict[str, list[str]]:
     return {col: [str(v) for v in valores] for col, valores in zip(nombres, encoder.categories_)}
 
 
+def vias_por_comuna() -> dict[str, list[str]]:
+    """Tipos de vía con al menos 5 siniestros en cada comuna (datos de entrenamiento 2019 a 2024)."""
+    return cargar_metadata().get("vias_por_comuna", {})
+
+
+def combinacion_inexistente(comuna, tipo_de_via) -> str | None:
+    """Devuelve una advertencia si la comuna no tiene registros en ese tipo de vía.
+
+    El modelo trata comuna y tipo de vía como variables independientes, así que igual
+    calcula un puntaje para combinaciones que no existen (por ejemplo, Comuna 1 en
+    Av. General Paz). Ese puntaje no es confiable y se avisa.
+    """
+    validas = vias_por_comuna().get(str(comuna)) if comuna is not None else None
+    if not validas or tipo_de_via in (None, "SIN_DATO") or tipo_de_via in validas:
+        return None
+    nombre = {"AUTOPISTA": "autopista", "AV. GRAL. PAZ": "Av. General Paz",
+              "AVENIDA": "avenida", "CALLE": "calle"}.get(tipo_de_via, tipo_de_via)
+    return (f"La comuna {comuna} no tiene siniestros registrados en {nombre}: "
+            "la combinación no existe o es un error de carga, y el resultado no es confiable.")
+
+
 def preparar_features(entrada: dict) -> pd.DataFrame:
     """Reproduce las 16 columnas predictoras del TP3.
 
@@ -108,6 +129,9 @@ def evaluar(entrada: dict) -> dict:
         advertencias.append("Falta la comuna. En el TP3 la completitud del registro dependía de la severidad.")
     if any(entrada.get(c) == "SIN_DATO" for c in ["modo_victima", "contraparte", "tipo_de_via"]):
         advertencias.append("Hay campos SIN_DATO: pueden reflejar cómo se registró el hecho, no el riesgo vial.")
+    combinacion = combinacion_inexistente(entrada.get("comuna"), entrada.get("tipo_de_via"))
+    if combinacion:
+        advertencias.append(combinacion)
     lat, lon = entrada.get("latitud"), entrada.get("longitud")
     if (lat is None) != (lon is None):
         entrada["latitud"] = entrada["longitud"] = None

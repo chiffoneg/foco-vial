@@ -112,3 +112,21 @@ def test_cors_permite_la_pagina_web():
     })
     assert r.status_code == 200
     assert r.headers.get("access-control-allow-origin") in ("*", "https://ejemplo.github.io")
+
+
+def test_info_publica_vias_por_comuna():
+    vias = cliente.get("/info").json()["vias_por_comuna"]
+    assert "AV. GRAL. PAZ" in vias["12"]          # la General Paz limita con la comuna 12
+    assert "AV. GRAL. PAZ" not in vias["1"]       # y no pasa por la comuna 1
+    assert "AUTOPISTA" not in vias["11"]
+
+
+def test_combinacion_inexistente_muestra_advertencia():
+    r = cliente.post("/predecir", json={**CASO, "comuna": 1, "tipo_de_via": "AV. GRAL. PAZ"})
+    assert r.status_code == 200
+    assert any("no tiene siniestros registrados" in s for s in r.json()["advertencias"])
+
+
+def test_combinacion_valida_no_advierte():
+    r = cliente.post("/predecir", json={**CASO, "comuna": 12, "tipo_de_via": "AV. GRAL. PAZ"})
+    assert not any("no tiene siniestros registrados" in s for s in r.json()["advertencias"])

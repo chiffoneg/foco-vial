@@ -39,5 +39,86 @@
   "versiones_modelo_cargado": {
     "scikit_learn": "1.8.0"
   },
-  "advertencia": "Clasificación retrospectiva; el puntaje no está calibrado y no representa riesgo de ocurrencia de siniestros. Las categorías SIN_DATO son una limitación metodológica del modelo heredado del TP3."
+  "advertencia": "Clasificación retrospectiva; el puntaje no está calibrado y no representa riesgo de ocurrencia de siniestros. Las categorías SIN_DATO son una limitación metodológica del modelo heredado del TP3.",
+  "vias_por_comuna": {
+    "1": [
+      "AUTOPISTA",
+      "AVENIDA",
+      "CALLE"
+    ],
+    "2": [
+      "AUTOPISTA",
+      "AVENIDA",
+      "CALLE"
+    ],
+    "3": [
+      "AUTOPISTA",
+      "AVENIDA",
+      "CALLE"
+    ],
+    "4": [
+      "AUTOPISTA",
+      "AVENIDA",
+      "CALLE"
+    ],
+    "5": [
+      "AUTOPISTA",
+      "AVENIDA",
+      "CALLE"
+    ],
+    "6": [
+      "AVENIDA",
+      "CALLE"
+    ],
+    "7": [
+      "AUTOPISTA",
+      "AVENIDA",
+      "CALLE"
+    ],
+    "8": [
+      "AUTOPISTA",
+      "AV. GRAL. PAZ",
+      "AVENIDA",
+      "CALLE"
+    ],
+    "9": [
+      "AUTOPISTA",
+      "AV. GRAL. PAZ",
+      "AVENIDA",
+      "CALLE"
+    ],
+    "10": [
+      "AUTOPISTA",
+      "AV. GRAL. PAZ",
+      "AVENIDA",
+      "CALLE"
+    ],
+    "11": [
+      "AV. GRAL. PAZ",
+      "AVENIDA",
+      "CALLE"
+    ],
+    "12": [
+      "AUTOPISTA",
+      "AV. GRAL. PAZ",
+      "AVENIDA",
+      "CALLE"
+    ],
+    "13": [
+      "AUTOPISTA",
+      "AV. GRAL. PAZ",
+      "AVENIDA",
+      "CALLE"
+    ],
+    "14": [
+      "AUTOPISTA",
+      "AVENIDA",
+      "CALLE"
+    ],
+    "15": [
+      "AVENIDA",
+      "CALLE"
+    ]
+  },
+  "vias_por_comuna_regla": "Combinaciones comuna x tipo de vía con al menos 5 siniestros en los datos de entrenamiento (2019 a 2024). Se usan para advertir combinaciones que no existen en la Ciudad o que son errores de carga."
 }

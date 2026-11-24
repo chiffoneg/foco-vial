@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from modelo.predictor import cargar_modelo, cargar_metadata, opciones_categoricas, evaluar
+from modelo.predictor import cargar_modelo, cargar_metadata, opciones_categoricas, evaluar, vias_por_comuna
 
 app = FastAPI(
     title="Foco Vial | API de severidad vial",
@@ -84,6 +84,7 @@ def info():
             "modo_victima": opciones["modo_desplazamiento_victima"],
             "contraparte": opciones["contraparte_siniestro"],
         },
+        "vias_por_comuna": vias_por_comuna(),
         "umbral": float(meta.get("umbral_clasificacion", 0.5)),
         "metricas_test_2025": meta.get("metricas_test", {}),
         "matriz_confusion_test_2025": meta.get("matriz_confusion_test_2025", {}),

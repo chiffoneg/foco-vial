@@ -249,6 +249,7 @@
               <div class="field" id="f-tipo_de_via">
                 <label for="tipo_de_via">Tipo de vía</label>
                 <select id="tipo_de_via" name="tipo_de_via" required></select>
+                <span class="hint" id="via-hint"></span>
                 <span class="err" aria-live="polite"></span>
               </div>
               <div class="field" id="f-modo_victima">
@@ -395,6 +396,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var form = $("form"), submit = $("submit"), resultBox = $("result");
   var conectado = false;
+  var VIAS_POR_COMUNA = {};
 
   function etiqueta(v) { return ETIQUETAS[v] || (v.charAt(0) + v.slice(1).toLowerCase()); }
   function pct(x) { return Math.round(x * 100) + "%"; }
@@ -408,6 +410,23 @@
     var t = setTimeout(function () { ctrl.abort(); }, ms || TIEMPO_MAXIMO_MS);
     opciones = Object.assign({ signal: ctrl.signal }, opciones || {});
     return fetch(API + ruta, opciones).finally(function () { clearTimeout(t); });
+  }
+
+  // ---------- Tipos de vía que existen en cada comuna ----------
+  // Avenida y calle hay en todas; la General Paz solo en las comunas que limitan con la provincia
+  // y no todas tienen autopista. La lista viene de la API (/info), calculada con los datos de 2019 a 2024.
+  function filtrarVias() {
+    var comuna = $("comuna").value, sel = $("tipo_de_via");
+    var validas = comuna === "" ? null : VIAS_POR_COMUNA[comuna];
+    var ocultas = [];
+    Array.prototype.forEach.call(sel.options, function (o) {
+      var ok = !validas || o.value === "SIN_DATO" || validas.indexOf(o.value) !== -1;
+      o.disabled = !ok;
+      o.textContent = etiqueta(o.value) + (ok ? "" : " (no hay en esta comuna)");
+      if (!ok) ocultas.push(o.value === "AV. GRAL. PAZ" ? "Av. General Paz" : etiqueta(o.value).toLowerCase());
+    });
+    if (sel.selectedOptions[0] && sel.selectedOptions[0].disabled) sel.value = "AVENIDA";
+    $("via-hint").textContent = ocultas.length ? "La comuna " + comuna + " no tiene " + ocultas.join(" ni ") + "." : "";
   }
 
   // ---------- Estado de conexión ----------
@@ -430,7 +449,10 @@
       var vals = info.opciones[k].slice().sort(function (a, b) { return (a === "SIN_DATO") - (b === "SIN_DATO") || etiqueta(a).localeCompare(etiqueta(b), "es"); });
       llenarSelect($(k), vals.map(function (v) { return { valor: v, texto: etiqueta(v) }; }));
     });
+    VIAS_POR_COMUNA = info.vias_por_comuna || {};
+    $("comuna").addEventListener("change", filtrarVias);
     $("tipo_de_via").value = "AVENIDA"; $("modo_victima").value = "MOTO"; $("contraparte").value = "AUTO";
+    filtrarVias();
     var hoy = new Date(); var iso = new Date(hoy.getTime() - hoy.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
     $("fecha").max = iso; $("fecha").value = "2025-06-10";
   }
@@ -561,7 +583,7 @@
     b.addEventListener("click", function () {
       var e = EJEMPLOS[b.dataset.ejemplo];
       $("fecha").value = e.fecha; $("hora").value = String(e.hora); $("comuna").value = e.comuna;
-      $("tipo_de_via").value = e.tipo_de_via; $("modo_victima").value = e.modo_victima; $("contraparte").value = e.contraparte;
+      filtrarVias(); $("tipo_de_via").value = e.tipo_de_via; $("modo_victima").value = e.modo_victima; $("contraparte").value = e.contraparte;
       $("latitud").value = ""; $("longitud").value = "";
       form.requestSubmit();
     });
