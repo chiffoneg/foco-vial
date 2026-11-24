@@ -77,11 +77,13 @@
 
   .eval { display: grid; grid-template-columns: 1.05fr 1fr; gap: 20px; align-items: start; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; }
-  .examples { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+  .examples { display: flex; flex-direction: column; align-items: stretch; gap: 6px; margin-bottom: 22px; }
   .examples-label { font-size: 13px; color: var(--muted); width: 100%; margin-bottom: 2px; }
   .chip { font: 500 14px var(--body); border: 1px solid var(--line); background: var(--paper); color: var(--ink); border-radius: 999px; padding: 8px 14px; cursor: pointer; transition: border-color .15s, background .15s; }
   .chip:hover { border-color: var(--ink); background: var(--card); }
   .chip:disabled { opacity: .5; cursor: not-allowed; }
+  .chip[data-ejemplo] { display: flex; align-items: center; gap: 10px; padding: 8px 14px 8px 8px; text-align: left; border-radius: 12px; }
+  .chip .num { flex: none; width: 22px; height: 22px; border-radius: 50%; background: var(--ink); color: #fff; font: 600 12px var(--mono); display: inline-grid; place-items: center; }
   form .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 14px; }
   .field { display: flex; flex-direction: column; gap: 6px; }
   .field.full { grid-column: 1 / -1; }
@@ -191,13 +193,30 @@
   }
   @media (max-width: 560px) {
     .wrap { padding: 0 16px; }
-    form .grid { grid-template-columns: 1fr; }
+    .hero { padding-top: 36px; padding-bottom: 28px; }
+    .lead { font-size: 16px; }
+    .fact b { font-size: 24px; }
+    section.block { padding: 36px 0; }
+    h2 { font-size: 24px; }
+    .block-sub { font-size: 15px; margin-bottom: 20px; }
+    .card { padding: 18px; }
+    .chip[data-ejemplo] { padding: 10px 12px 10px 10px; }
+    .verdict h3 { font-size: 24px; }
+    header.top .wrap { height: 56px; }
+    .brand { font-size: 18px; }
+    .status { font-size: 12px; padding: 5px 10px; }
+    form .grid { gap: 14px 10px; }
+    .field label { font-size: 12.5px; }
+    #f-modo_victima, #f-contraparte { grid-column: 1 / -1; }
     .flow { grid-template-columns: 1fr; }
     .step + .step { padding-left: 0; border-left: 0; border-top: 1px solid var(--line); }
     details.raw .raw-grid { grid-template-columns: 1fr; }
     .cm { grid-template-columns: 76px 1fr 1fr; }
-    .status .status-text { max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
+    .status .status-text { max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
+    .limits { grid-template-columns: 1fr; }
+    footer .wrap { flex-direction: column; }
   }
+  @media (max-width: 359px) { form .grid { grid-template-columns: 1fr; } }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
 </head>
@@ -236,9 +255,10 @@
         <div class="card">
           <div class="examples" role="group" aria-label="Casos de ejemplo">
             <div class="examples-label">Casos de ejemplo</div>
-            <button type="button" class="chip" data-ejemplo="peaton">Peatón en autopista, de madrugada</button>
-            <button type="button" class="chip" data-ejemplo="auto">Auto contra auto, a la tarde</button>
-            <button type="button" class="chip" data-ejemplo="incompleto">Registro incompleto</button>
+            <button type="button" class="chip" data-ejemplo="peaton"><span class="num">1</span>Peatón en avenida, de madrugada</button>
+            <button type="button" class="chip" data-ejemplo="auto"><span class="num">2</span>Auto contra auto, a la tarde</button>
+            <button type="button" class="chip" data-ejemplo="incompleto"><span class="num">3</span>Registro incompleto</button>
+            <button type="button" class="chip" data-ejemplo="colectivo"><span class="num">4</span>Transporte público en Av. Triunvirato</button>
           </div>
           <form id="form" novalidate>
             <div class="grid">
@@ -345,9 +365,11 @@
   };
   var CAMPOS = { fecha: "Fecha", hora: "Hora", comuna: "Comuna", tipo_de_via: "Tipo de vía", modo_victima: "Víctima", contraparte: "Contraparte", latitud: "Latitud", longitud: "Longitud" };
   var EJEMPLOS = {
-    peaton:     { fecha: "2025-03-15", hora: 3,  comuna: "14", tipo_de_via: "AUTOPISTA", modo_victima: "PEATON",   contraparte: "AUTO" },
+    peaton:     { fecha: "2025-03-15", hora: 3,  comuna: "14", tipo_de_via: "AVENIDA",   modo_victima: "PEATON",   contraparte: "AUTO" },
     auto:       { fecha: "2025-07-08", hora: 15, comuna: "6",  tipo_de_via: "CALLE",     modo_victima: "AUTO",     contraparte: "AUTO" },
-    incompleto: { fecha: "2025-08-11", hora: 13, comuna: "",   tipo_de_via: "CALLE",     modo_victima: "SIN_DATO", contraparte: "SIN_DATO" }
+    incompleto: { fecha: "2025-08-11", hora: 13, comuna: "",   tipo_de_via: "CALLE",     modo_victima: "SIN_DATO", contraparte: "SIN_DATO" },
+    // Av. Triunvirato y Av. Monroe (Villa Urquiza): coordenadas registradas en los siniestros de esa esquina.
+    colectivo:  { fecha: "2025-07-08", hora: 9,  comuna: "12", tipo_de_via: "AVENIDA",   modo_victima: "TRANSPORTE PUBLICO", contraparte: "TRANSPORTE PUBLICO", latitud: "-34.5743", longitud: "-58.4864" }
   };
 
   var $ = function (id) { return document.getElementById(id); };
@@ -435,7 +457,7 @@
         prepararFormulario(info); mostrarMetricas(info);
         conectado = true; submit.disabled = false;
         document.querySelectorAll(".chip").forEach(function (b) { b.disabled = false; });
-        estado("ok", "API conectada · modelo " + (info.modelo || "") );
+        estado("ok", "API conectada");
         $("form-msg").textContent = "";
       })
       .catch(function () {
@@ -540,7 +562,8 @@
       var e = EJEMPLOS[b.dataset.ejemplo];
       $("fecha").value = e.fecha; $("hora").value = String(e.hora); $("comuna").value = e.comuna;
       filtrarVias(); $("tipo_de_via").value = e.tipo_de_via; $("modo_victima").value = e.modo_victima; $("contraparte").value = e.contraparte;
-      $("latitud").value = ""; $("longitud").value = "";
+      $("latitud").value = e.latitud || ""; $("longitud").value = e.longitud || "";
+      document.querySelector("details.adv").open = !!e.latitud;
       form.requestSubmit();
     });
   });
