@@ -1,0 +1,67 @@
+[
+  {
+    "entrada": {
+      "fecha": "2025-03-15",
+      "hora": 3,
+      "comuna": 14,
+      "tipo_de_via": "AUTOPISTA",
+      "modo_victima": "PEATON",
+      "contraparte": "AUTO",
+      "latitud": -34.6,
+      "longitud": -58.43
+    },
+    "puntaje_esperado": 0.6586536601199714
+  },
+  {
+    "entrada": {
+      "fecha": "2025-07-08",
+      "hora": 15,
+      "comuna": 6,
+      "tipo_de_via": "CALLE",
+      "modo_victima": "AUTO",
+      "contraparte": "AUTO",
+      "latitud": null,
+      "longitud": null
+    },
+    "puntaje_esperado": 0.17457068899012335
+  },
+  {
+    "entrada": {
+      "fecha": "2025-08-11",
+      "hora": 13,
+      "comuna": null,
+      "tipo_de_via": "CALLE",
+      "modo_victima": "SIN_DATO",
+      "contraparte": "SIN_DATO",
+      "latitud": null,
+      "longitud": null
+    },
+    "puntaje_esperado": 0.05427369773867416
+  },
+  {
+    "entrada": {
+      "fecha": "2025-11-12",
+      "hora": 22,
+      "comuna": 3,
+      "tipo_de_via": "AVENIDA",
+      "modo_victima": "MOTO",
+      "contraparte": "OBJETO FIJO",
+      "latitud": -34.62,
+      "longitud": -58.4
+    },
+    "puntaje_esperado": 0.6244045278796793
+  },
+  {
+    "entrada": {
+      "fecha": "2025-04-06",
+      "hora": 6,
+      "comuna": 13,
+      "tipo_de_via": "AV. GRAL. PAZ",
+      "modo_victima": "BICICLETA",
+      "contraparte": "CAMION",
+      "latitud": -34.55,
+      "longitud": -58.47
+    },
+    "puntaje_esperado": 0.5743314495592223
+  }
+]

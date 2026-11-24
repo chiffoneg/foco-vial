@@ -1,0 +1,43 @@
+{
+  "proyecto": "Factores de riesgo asociados a la severidad de siniestros viales en CABA",
+  "modelo": "Random Forest",
+  "version_modelo": "tp3",
+  "procedencia": "Pipeline guardado en el TP3. Verificado: reproduce exactamente las métricas y la matriz de confusión del test 2025 del notebook del TP3 a partir del Excel original.",
+  "train_years": "2019-2024",
+  "test_year": "2025",
+  "n_train": 53988,
+  "n_test": 11750,
+  "umbral_clasificacion": 0.5,
+  "target": "target_binario",
+  "target_definicion": {
+    "0": "LEVE",
+    "1": "GRAVE o MORTAL"
+  },
+  "n_features": 16,
+  "metricas_test": {
+    "Accuracy": 0.7148936170212766,
+    "Precision": 0.1304222924446998,
+    "Recall": 0.5842985842985843,
+    "F1": 0.21324565523720057,
+    "PR-AUC": 0.1532367553498417,
+    "ROC-AUC": 0.7212136822088522
+  },
+  "matriz_confusion_test_2025": {
+    "TN": 7946,
+    "FP": 3027,
+    "FN": 323,
+    "TP": 454
+  },
+  "cv_f1_train": 0.23585226760284309,
+  "hiperparametros": {
+    "n_estimators": 50,
+    "max_depth": 12,
+    "min_samples_leaf": 10,
+    "class_weight": "balanced_subsample",
+    "random_state": 42
+  },
+  "versiones_modelo_cargado": {
+    "scikit_learn": "1.8.0"
+  },
+  "advertencia": "Clasificación retrospectiva; el puntaje no está calibrado y no representa riesgo de ocurrencia de siniestros. Las categorías SIN_DATO son una limitación metodológica del modelo heredado del TP3."
+}

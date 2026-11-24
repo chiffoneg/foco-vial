@@ -1,0 +1,8 @@
+# Dependencias de la API (Render). Versión de scikit-learn igual a la del modelo guardado.
+scikit-learn==1.8.0
+pandas==2.2.3
+numpy==2.3.5
+joblib>=1.4,<2
+fastapi>=0.115,<1
+pydantic>=2.9,<3
+uvicorn[standard]>=0.30,<1

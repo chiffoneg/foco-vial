@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Foco Vial · Severidad de siniestros viales en CABA</title>
+<meta name="description" content="Herramienta académica que estima la severidad registrada de un siniestro vial ya ocurrido en la Ciudad de Buenos Aires.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%278%27 fill=%27%2315171C%27/%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%276%27 fill=%27%23F2B705%27/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F5F3EE;
+    --card: #FFFFFF;
+    --ink: #15171C;
+    --muted: #5C616B;
+    --soft: #8A8F98;
+    --line: #DDD9CF;
+    --signal: #F2B705;
+    --signal-soft: #FDF3D3;
+    --alert: #B8361F;
+    --alert-soft: #FBE9E4;
+    --ok: #2E7656;
+    --ok-soft: #E3F1EA;
+    --radius: 14px;
+    --head: "Archivo", "Helvetica Neue", Arial, sans-serif;
+    --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+  .stripe { height: 8px; background: repeating-linear-gradient(-45deg, var(--ink) 0 14px, var(--signal) 14px 28px); }
+  header.top { border-bottom: 1px solid var(--line); background: var(--paper); position: sticky; top: 0; z-index: 10; }
+  header.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 64px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-family: var(--head); font-weight: 800; font-size: 20px; letter-spacing: -0.01em; text-decoration: none; }
+  .brand-mark { width: 30px; height: 30px; border-radius: 8px; background: var(--ink); display: grid; place-items: center; }
+  .brand-mark span { width: 12px; height: 12px; border-radius: 50%; background: var(--signal); box-shadow: 0 0 0 3px var(--ink), 0 0 0 5px var(--signal); }
+  nav.links { display: flex; gap: 22px; font-size: 14px; color: var(--muted); }
+  nav.links a { text-decoration: none; }
+  nav.links a:hover { color: var(--ink); }
+  .status { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); white-space: nowrap; }
+  .status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--soft); }
+  .status[data-state="ok"] .dot { background: var(--ok); }
+  .status[data-state="waking"] .dot { background: var(--signal); animation: pulse 1.2s ease-in-out infinite; }
+  .status[data-state="error"] .dot { background: var(--alert); }
+  @keyframes pulse { 50% { opacity: .3; } }
+
+  .hero { padding: 64px 0 40px; }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  h1 { font-family: var(--head); font-weight: 800; font-size: clamp(36px, 5.4vw, 60px); line-height: 1.02; letter-spacing: -0.025em; margin: 14px 0 18px; max-width: 820px; }
+  h1 mark { background: linear-gradient(transparent 62%, var(--signal) 62%); color: inherit; padding: 0 2px; }
+  .lead { font-size: 18px; color: var(--muted); max-width: 680px; margin: 0; }
+  .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-top: 40px; border-top: 1px solid var(--ink); }
+  .fact { padding: 16px 18px 0 0; }
+  .fact b { display: block; font-family: var(--head); font-size: 30px; font-weight: 700; letter-spacing: -0.02em; }
+  .fact span { font-size: 13px; color: var(--muted); }
+
+  section.block { padding: 56px 0; border-top: 1px solid var(--line); }
+  .block-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 24px; }
+  .block-num { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+  h2 { font-family: var(--head); font-weight: 700; font-size: 30px; letter-spacing: -0.02em; margin: 0; }
+  .block-sub { color: var(--muted); margin: -12px 0 28px; max-width: 700px; }
+
+  .eval { display: grid; grid-template-columns: 1.05fr 1fr; gap: 20px; align-items: start; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; }
+  .examples { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+  .examples-label { font-size: 13px; color: var(--muted); width: 100%; margin-bottom: 2px; }
+  .chip { font: 500 14px var(--body); border: 1px solid var(--line); background: var(--paper); color: var(--ink); border-radius: 999px; padding: 8px 14px; cursor: pointer; transition: border-color .15s, background .15s; }
+  .chip:hover { border-color: var(--ink); background: var(--card); }
+  .chip:disabled { opacity: .5; cursor: not-allowed; }
+  form .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 14px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field.full { grid-column: 1 / -1; }
+  label { font-size: 13px; font-weight: 600; }
+  input, select { font: 15px var(--body); color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 100%; min-height: 44px; }
+  input:focus, select:focus, button:focus-visible, .chip:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .field .err { font-size: 12px; color: var(--alert); min-height: 0; }
+  .field.invalid input, .field.invalid select { border-color: var(--alert); }
+  details.adv { grid-column: 1 / -1; border-top: 1px dashed var(--line); padding-top: 12px; }
+  details.adv summary { cursor: pointer; font-size: 14px; color: var(--muted); }
+  details.adv .grid { margin-top: 12px; }
+  .hint { font-size: 12px; color: var(--soft); }
+  .submit { margin-top: 22px; width: 100%; font: 700 16px var(--head); letter-spacing: .01em; background: var(--ink); color: #fff; border: 0; border-radius: 12px; padding: 15px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; }
+  .submit:hover { background: #2A2D35; }
+  .submit:disabled { background: var(--soft); cursor: not-allowed; }
+  .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.35); border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; display: none; }
+  .loading .spinner { display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .form-msg { font-size: 13px; margin-top: 10px; color: var(--muted); text-align: center; min-height: 20px; }
+
+  .result { position: sticky; top: 88px; min-height: 420px; display: flex; flex-direction: column; }
+  .empty { margin: auto; text-align: center; color: var(--muted); max-width: 300px; padding: 40px 0; }
+  .empty .road { width: 120px; height: 56px; margin: 0 auto 18px; border-radius: 10px; background: var(--ink); position: relative; overflow: hidden; }
+  .empty .road::after { content: ""; position: absolute; left: 0; right: 0; top: 26px; height: 4px; background: repeating-linear-gradient(90deg, var(--signal) 0 14px, transparent 14px 26px); }
+  .verdict { border-radius: 12px; padding: 18px 20px; margin-bottom: 20px; }
+  .verdict.alert { background: var(--alert-soft); }
+  .verdict.ok { background: var(--ok-soft); }
+  .verdict small { font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
+  .verdict.alert small { color: var(--alert); }
+  .verdict.ok small { color: var(--ok); }
+  .verdict h3 { font-family: var(--head); font-size: 28px; letter-spacing: -0.02em; margin: 4px 0 4px; }
+  .verdict p { margin: 0; font-size: 14px; color: var(--muted); }
+  .scale-label { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+  .scale-label b { font-family: var(--mono); font-weight: 500; color: var(--ink); font-size: 15px; }
+  .scale { position: relative; height: 12px; border-radius: 999px; background: linear-gradient(90deg, var(--ok-soft), var(--signal-soft) 50%, var(--alert-soft)); border: 1px solid var(--line); }
+  .scale .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; background: var(--ink); transition: width .6s cubic-bezier(.2,.8,.2,1); }
+  .scale .thr { position: absolute; top: -6px; bottom: -6px; width: 2px; background: var(--alert); }
+  .scale-ticks { position: relative; height: 18px; font-family: var(--mono); font-size: 11px; color: var(--soft); margin-top: 6px; }
+  .scale-ticks span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+  .scale-ticks span:first-child { transform: none; }
+  .scale-ticks span:last-child { transform: translateX(-100%); }
+  .scale-ticks .thr-label { color: var(--alert); }
+  .r-section { margin-top: 20px; }
+  .r-section h4 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
+  .r-section ul { margin: 0; padding-left: 18px; }
+  .r-section li { margin: 4px 0; font-size: 15px; }
+  .warn { background: var(--signal-soft); border-left: 3px solid var(--signal); padding: 10px 12px; font-size: 14px; margin: 6px 0; border-radius: 0; }
+  .note { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; margin-top: 20px; }
+  details.raw { margin-top: 14px; }
+  details.raw summary { cursor: pointer; font-size: 14px; font-weight: 600; }
+  details.raw .raw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  details.raw pre { margin: 0; background: var(--ink); color: #E9E7E1; font: 12px/1.5 var(--mono); padding: 12px; border-radius: 10px; overflow: auto; max-height: 280px; }
+  details.raw .raw-title { font-size: 12px; color: var(--muted); margin-bottom: 4px; font-family: var(--mono); }
+  .error-box { background: var(--alert-soft); color: var(--alert); border-radius: 12px; padding: 16px 18px; }
+  .error-box b { display: block; margin-bottom: 4px; }
+  .error-box ul { margin: 6px 0 0; padding-left: 18px; color: var(--ink); font-size: 14px; }
+
+  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  .metric b { display: block; font-family: var(--head); font-weight: 700; font-size: 34px; letter-spacing: -0.02em; }
+  .metric .m-name { font-size: 14px; font-weight: 600; }
+  .metric p { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
+  .model-grid { display: grid; grid-template-columns: 1fr 1.1fr; gap: 20px; }
+  .cm { display: grid; grid-template-columns: 110px 1fr 1fr; gap: 6px; font-size: 14px; }
+  .cm .h { font-size: 12px; color: var(--muted); display: flex; align-items: flex-end; justify-content: center; text-align: center; padding-bottom: 4px; }
+  .cm .rh { font-size: 12px; color: var(--muted); display: flex; align-items: center; }
+  .cm .c { border-radius: 10px; padding: 14px; text-align: center; }
+  .cm .c b { display: block; font-family: var(--head); font-size: 26px; }
+  .cm .c span { font-size: 12px; }
+  .cm .tp { background: var(--ok-soft); }
+  .cm .fn { background: var(--alert-soft); }
+  .cm .fp { background: var(--signal-soft); }
+  .cm .tn { background: var(--paper); }
+  .reading p { margin: 0 0 10px; }
+
+  .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+  .step { position: relative; padding: 20px 22px 20px 0; }
+  .step + .step { padding-left: 22px; border-left: 1px solid var(--line); }
+  .step .s-num { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .step h3 { font-family: var(--head); font-size: 19px; margin: 6px 0 6px; }
+  .step p { margin: 0; font-size: 14px; color: var(--muted); }
+  .step .where { display: inline-block; margin-top: 10px; font-family: var(--mono); font-size: 11px; border: 1px solid var(--line); border-radius: 6px; padding: 2px 7px; color: var(--muted); }
+  table.endpoints { width: 100%; border-collapse: collapse; margin-top: 28px; font-size: 14px; }
+  table.endpoints th, table.endpoints td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.endpoints th { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+  table.endpoints code { font-family: var(--mono); font-size: 13px; }
+  .method { font-family: var(--mono); font-size: 11px; padding: 2px 6px; border-radius: 4px; background: var(--ink); color: #fff; margin-right: 6px; }
+
+  .limits { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .limit h3 { font-family: var(--head); font-size: 17px; margin: 0 0 6px; }
+  .limit p { margin: 0; font-size: 14px; color: var(--muted); }
+
+  footer { border-top: 1px solid var(--line); padding: 28px 0 40px; font-size: 13px; color: var(--muted); }
+  footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+
+  @media (max-width: 900px) {
+    nav.links { display: none; }
+    .eval, .model-grid { grid-template-columns: 1fr; }
+    .result { position: static; min-height: 0; }
+    .facts, .metrics, .limits { grid-template-columns: 1fr 1fr; row-gap: 16px; }
+    .flow { grid-template-columns: 1fr 1fr; }
+    .step:nth-child(3) { padding-left: 0; border-left: 0; }
+  }
+  @media (max-width: 560px) {
+    .wrap { padding: 0 16px; }
+    form .grid { grid-template-columns: 1fr; }
+    .flow { grid-template-columns: 1fr; }
+    .step + .step { padding-left: 0; border-left: 0; border-top: 1px solid var(--line); }
+    details.raw .raw-grid { grid-template-columns: 1fr; }
+    .cm { grid-template-columns: 76px 1fr 1fr; }
+    .status .status-text { max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="stripe" aria-hidden="true"></div>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#inicio"><span class="brand-mark" aria-hidden="true"><span></span></span>Foco Vial</a>
+    <nav class="links" aria-label="Secciones">
+      <a href="#evaluar">Evaluar</a>
+      <a href="#modelo">El modelo</a>
+      <a href="#funcionamiento">Cómo funciona</a>
+      <a href="#limites">Límites</a>
+    </nav>
+    <div class="status" id="status" data-state="idle" role="status" aria-live="polite">
+      <span class="dot" aria-hidden="true"></span><span class="status-text" id="status-text">Conectando con la API</span>
+    </div>
+  </div>
+</header>
+
+<main id="inicio">
+  <div class="wrap hero">
+    <div class="eyebrow">Ciencia de Datos Aplicada · ITBA · TP4</div>
+    <h1>¿Ese siniestro terminó en <mark>lesiones graves</mark>?</h1>
+    <p class="lead">Foco Vial estima la severidad registrada de un siniestro vial que ya ocurrió en la Ciudad de Buenos Aires, a partir de cuándo, dónde y quiénes participaron. Sirve para priorizar el análisis, no para decidir solo.</p>
+    <div class="facts">
+      <div class="fact"><b>65.738</b><span>siniestros de 2019 a 2025</span></div>
+      <div class="fact"><b>5,6%</b><span>terminaron graves o mortales</span></div>
+      <div class="fact"><b id="fact-recall">58%</b><span>de los graves de 2025 detectados</span></div>
+      <div class="fact"><b>2,3×</b><span>mejor que elegir al azar</span></div>
+    </div>
+  </div>
+
+  <section class="block" id="evaluar" aria-labelledby="t-evaluar">
+    <div class="wrap">
+      <div class="block-head"><span class="block-num">01</span><h2 id="t-evaluar">Evaluar un siniestro</h2></div>
+      <p class="block-sub">Cargá los datos del hecho o probá un caso de ejemplo. La página le envía los datos a la API, la API arma las variables y consulta el modelo, y la respuesta vuelve acá.</p>
+      <div class="eval">
+        <div class="card">
+          <div class="examples" role="group" aria-label="Casos de ejemplo">
+            <div class="examples-label">Casos de ejemplo</div>
+            <button type="button" class="chip" data-ejemplo="peaton">Peatón en autopista, de madrugada</button>
+            <button type="button" class="chip" data-ejemplo="auto">Auto contra auto, a la tarde</button>
+            <button type="button" class="chip" data-ejemplo="incompleto">Registro incompleto</button>
+          </div>
+          <form id="form" novalidate>
+            <div class="grid">
+              <div class="field" id="f-fecha">
+                <label for="fecha">Fecha</label>
+                <input type="date" id="fecha" name="fecha" min="2019-01-01" required>
+                <span class="err" aria-live="polite"></span>
+              </div>
+              <div class="field" id="f-hora">
+                <label for="hora">Hora</label>
+                <select id="hora" name="hora" required></select>
+                <span class="err" aria-live="polite"></span>
+              </div>
+              <div class="field" id="f-comuna">
+                <label for="comuna">Comuna</label>
+                <select id="comuna" name="comuna"></select>
+                <span class="err" aria-live="polite"></span>
+              </div>
+              <div class="field" id="f-tipo_de_via">
+                <label for="tipo_de_via">Tipo de vía</label>
+                <select id="tipo_de_via" name="tipo_de_via" required></select>
+                <span class="err" aria-live="polite"></span>
+              </div>
+              <div class="field" id="f-modo_victima">
+                <label for="modo_victima">Cómo se movía la víctima</label>
+                <select id="modo_victima" name="modo_victima" required></select>
+                <span class="err" aria-live="polite"></span>
+              </div>
+              <div class="field" id="f-contraparte">
+                <label for="contraparte">Con qué chocó</label>
+                <select id="contraparte" name="contraparte" required></select>
+                <span class="err" aria-live="polite"></span>
+              </div>
+              <details class="adv">
+                <summary>Ubicación exacta (opcional)</summary>
+                <div class="grid">
+                  <div class="field" id="f-latitud">
+                    <label for="latitud">Latitud</label>
+                    <input type="text" inputmode="decimal" id="latitud" name="latitud" placeholder="-34.60">
+                    <span class="err" aria-live="polite"></span>
+                  </div>
+                  <div class="field" id="f-longitud">
+                    <label for="longitud">Longitud</label>
+                    <input type="text" inputmode="decimal" id="longitud" name="longitud" placeholder="-58.43">
+                    <span class="err" aria-live="polite"></span>
+                  </div>
+                  <p class="hint field full">Si no se completa, el modelo usa una ubicación típica de la Ciudad.</p>
+                </div>
+              </details>
+            </div>
+            <button type="submit" class="submit" id="submit" disabled><span class="spinner" aria-hidden="true"></span><span id="submit-text">Evaluar siniestro</span></button>
+            <div class="form-msg" id="form-msg">Esperando conexión con la API.</div>
+          </form>
+        </div>
+
+        <div class="card result" id="result" aria-live="polite">
+          <div class="empty">
+            <div class="road" aria-hidden="true"></div>
+            <p>Completá el formulario o elegí un caso de ejemplo para ver el resultado.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="modelo" aria-labelledby="t-modelo">
+    <div class="wrap">
+      <div class="block-head"><span class="block-num">02</span><h2 id="t-modelo">El modelo y cómo rindió</h2></div>
+      <p class="block-sub">Un Random Forest entrenado con los siniestros de 2019 a 2024 y evaluado una sola vez con los 11.750 siniestros de 2025, que nunca vio. Lo elegimos frente a una regresión logística por su mejor F1 en validación cruzada (0,236 contra 0,202).</p>
+      <div class="metrics">
+        <div class="card metric"><div class="m-name">Recall</div><b id="m-recall">58%</b><p>De cada 100 graves o mortales, cuántos detecta.</p></div>
+        <div class="card metric"><div class="m-name">Precisión</div><b id="m-precision">13%</b><p>De cada 100 alertas, cuántas eran graves de verdad.</p></div>
+        <div class="card metric"><div class="m-name">PR-AUC</div><b id="m-prauc">0,153</b><p>Elegir al azar daría 0,066, la proporción de graves en 2025.</p></div>
+        <div class="card metric"><div class="m-name">ROC-AUC</div><b id="m-roc">0,721</b><p>0,5 es tirar una moneda y 1 es perfecto.</p></div>
+      </div>
+      <div class="model-grid">
+        <div class="card">
+          <h4 style="margin:0 0 14px;font-size:15px">Qué pasó con los siniestros de 2025</h4>
+          <div class="cm" role="table" aria-label="Matriz de confusión del test 2025">
+            <div></div><div class="h">El modelo dijo grave</div><div class="h">El modelo dijo leve</div>
+            <div class="rh">Era grave o mortal</div>
+            <div class="c tp"><b id="cm-tp">454</b><span>detectados</span></div>
+            <div class="c fn"><b id="cm-fn">323</b><span>se escaparon</span></div>
+            <div class="rh">Era leve</div>
+            <div class="c fp"><b id="cm-fp">3.027</b><span>falsas alarmas</span></div>
+            <div class="c tn"><b id="cm-tn">7.946</b><span>bien identificados</span></div>
+          </div>
+        </div>
+        <div class="card reading">
+          <h4 style="margin:0 0 14px;font-size:15px">Cómo leerlo</h4>
+          <p>El modelo encuentra señales reales: detecta más de la mitad de los casos graves y sus alertas aciertan el doble de lo que acertaría el azar.</p>
+          <p>Pero genera muchas falsas alarmas, porque los casos graves son muy pocos (5,6%). Por eso conviene usarlo para ordenar qué casos mirar primero, y no como una decisión automática.</p>
+          <p>Accuracy no sirve acá: decir siempre "leve" acierta el 93% y no encuentra ni un caso grave.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="funcionamiento" aria-labelledby="t-func">
+    <div class="wrap">
+      <div class="block-head"><span class="block-num">03</span><h2 id="t-func">Cómo funciona</h2></div>
+      <p class="block-sub">Cada pieza hace una sola cosa. La página no tiene el modelo: se comunica con la API, que es el servicio que lo expone.</p>
+      <div class="flow">
+        <div class="step"><div class="s-num">1</div><h3>Página web</h3><p>Recibe los datos del siniestro y muestra el resultado.</p><span class="where">GitHub Pages</span></div>
+        <div class="step"><div class="s-num">2</div><h3>API</h3><p>Valida los datos y rechaza los inválidos con un mensaje claro.</p><span class="where">FastAPI en Render</span></div>
+        <div class="step"><div class="s-num">3</div><h3>Variables</h3><p>Arma las 16 variables del TP3: franja, estación, hora cíclica y más.</p><span class="where">modelo/predictor.py</span></div>
+        <div class="step"><div class="s-num">4</div><h3>Modelo</h3><p>Random Forest ya entrenado. No se reentrena con cada consulta.</p><span class="where">.joblib del TP3</span></div>
+      </div>
+      <table class="endpoints">
+        <thead><tr><th>Endpoint</th><th>Para qué</th><th>Devuelve</th></tr></thead>
+        <tbody>
+          <tr><td><span class="method">GET</span><code>/health</code></td><td>Saber si el servicio y el modelo están activos</td><td>Estado del servicio</td></tr>
+          <tr><td><span class="method">GET</span><code>/info</code></td><td>Opciones válidas y métricas del modelo</td><td>Categorías, umbral y métricas de 2025</td></tr>
+          <tr><td><span class="method">POST</span><code>/predecir</code></td><td>Evaluar un siniestro</td><td>Puntaje, clasificación, factores y advertencias</td></tr>
+        </tbody>
+      </table>
+      <p class="hint" style="margin-top:12px">Documentación interactiva de la API: <a id="docs-link" href="#" target="_blank" rel="noopener">/docs</a></p>
+    </div>
+  </section>
+
+  <section class="block" id="limites" aria-labelledby="t-limites">
+    <div class="wrap">
+      <div class="block-head"><span class="block-num">04</span><h2 id="t-limites">Límites de la herramienta</h2></div>
+      <div class="limits">
+        <div class="card limit"><h3>No predice accidentes</h3><p>Estima qué tan grave fue un siniestro que ya ocurrió. No dice dónde ni cuándo va a haber uno.</p></div>
+        <div class="card limit"><h3>Puntaje no es probabilidad</h3><p>El modelo se entrenó compensando el desbalance, así que el puntaje ordena casos pero no está calibrado.</p></div>
+        <div class="card limit"><h3>Asociación, no causa</h3><p>Los factores muestran qué se asocia con más gravedad. No prueban que la causen.</p></div>
+        <div class="card limit"><h3>Datos incompletos</h3><p>Los siniestros leves se registran con más faltantes. Un registro incompleto tiende a salir leve por cómo se cargó, no por el riesgo real.</p></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Foco Vial · Matías Chiffone Guarde · María Candelaria Terán Ortiz · Olivia Vella Delgado</span>
+    <span>Datos: Buenos Aires Data, Observatorio de Movilidad y Seguridad Vial (GCBA). Proyecto académico.</span>
+  </div>
+</footer>
+
+<script src="config.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  // ---------- Configuración ----------
+  var params = new URLSearchParams(location.search);
+  var local = ["localhost", "127.0.0.1", ""].indexOf(location.hostname) !== -1;
+  var API = (params.get("api") || (local ? "http://127.0.0.1:8000" : (window.FOCO_VIAL_CONFIG || {}).API_URL) || "").replace(/\/+$/, "");
+  var TIEMPO_MAXIMO_MS = 90000;
+
+  var ETIQUETAS = {
+    "AUTOPISTA": "Autopista", "AV. GRAL. PAZ": "Av. General Paz", "AVENIDA": "Avenida", "CALLE": "Calle",
+    "AUTO": "Auto", "BICICLETA": "Bicicleta", "MOTO": "Moto", "PEATON": "Peatón", "TAXI": "Taxi",
+    "TRANSPORTE PUBLICO": "Transporte público", "UTILITARIO": "Utilitario", "CAMION": "Camión",
+    "MOVIL": "Móvil policial o de emergencia", "OBJETO FIJO": "Objeto fijo", "OTRO": "Otro", "SIN_DATO": "Sin dato"
+  };
+  var CAMPOS = { fecha: "Fecha", hora: "Hora", comuna: "Comuna", tipo_de_via: "Tipo de vía", modo_victima: "Víctima", contraparte: "Contraparte", latitud: "Latitud", longitud: "Longitud" };
+  var EJEMPLOS = {
+    peaton:     { fecha: "2025-03-15", hora: 3,  comuna: "14", tipo_de_via: "AUTOPISTA", modo_victima: "PEATON",   contraparte: "AUTO" },
+    auto:       { fecha: "2025-07-08", hora: 15, comuna: "6",  tipo_de_via: "CALLE",     modo_victima: "AUTO",     contraparte: "AUTO" },
+    incompleto: { fecha: "2025-08-11", hora: 13, comuna: "",   tipo_de_via: "CALLE",     modo_victima: "SIN_DATO", contraparte: "SIN_DATO" }
+  };
+
+  var $ = function (id) { return document.getElementById(id); };
+  var form = $("form"), submit = $("submit"), resultBox = $("result");
+  var conectado = false;
+
+  function etiqueta(v) { return ETIQUETAS[v] || (v.charAt(0) + v.slice(1).toLowerCase()); }
+  function pct(x) { return Math.round(x * 100) + "%"; }
+  function dec(x, n) { return x.toFixed(n).replace(".", ","); }
+  function miles(n) { return Number(n).toLocaleString("es-AR"); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+
+  // ---------- Pedidos con tiempo máximo ----------
+  function pedir(ruta, opciones, ms) {
+    var ctrl = new AbortController();
+    var t = setTimeout(function () { ctrl.abort(); }, ms || TIEMPO_MAXIMO_MS);
+    opciones = Object.assign({ signal: ctrl.signal }, opciones || {});
+    return fetch(API + ruta, opciones).finally(function () { clearTimeout(t); });
+  }
+
+  // ---------- Estado de conexión ----------
+  function estado(tipo, texto) { $("status").dataset.state = tipo; $("status-text").textContent = texto; }
+
+  function llenarSelect(sel, valores, preferido) {
+    sel.innerHTML = "";
+    valores.forEach(function (v) {
+      var o = document.createElement("option"); o.value = v.valor; o.textContent = v.texto; sel.appendChild(o);
+    });
+    if (preferido !== undefined) sel.value = preferido;
+  }
+
+  function prepararFormulario(info) {
+    var horas = []; for (var h = 0; h < 24; h++) horas.push({ valor: String(h), texto: (h < 10 ? "0" : "") + h + ":00" });
+    llenarSelect($("hora"), horas, "15");
+    var comunas = [{ valor: "", texto: "Sin dato" }]; for (var c = 1; c <= 15; c++) comunas.push({ valor: String(c), texto: "Comuna " + c });
+    llenarSelect($("comuna"), comunas, "1");
+    ["tipo_de_via", "modo_victima", "contraparte"].forEach(function (k) {
+      var vals = info.opciones[k].slice().sort(function (a, b) { return (a === "SIN_DATO") - (b === "SIN_DATO") || etiqueta(a).localeCompare(etiqueta(b), "es"); });
+      llenarSelect($(k), vals.map(function (v) { return { valor: v, texto: etiqueta(v) }; }));
+    });
+    $("tipo_de_via").value = "AVENIDA"; $("modo_victima").value = "MOTO"; $("contraparte").value = "AUTO";
+    var hoy = new Date(); var iso = new Date(hoy.getTime() - hoy.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    $("fecha").max = iso; $("fecha").value = "2025-06-10";
+  }
+
+  function mostrarMetricas(info) {
+    var m = info.metricas_test_2025 || {}, cm = info.matriz_confusion_test_2025 || {};
+    if (m.Recall != null) { $("m-recall").textContent = pct(m.Recall); $("fact-recall").textContent = pct(m.Recall); }
+    if (m.Precision != null) $("m-precision").textContent = pct(m.Precision);
+    if (m["PR-AUC"] != null) $("m-prauc").textContent = dec(m["PR-AUC"], 3);
+    if (m["ROC-AUC"] != null) $("m-roc").textContent = dec(m["ROC-AUC"], 3);
+    if (cm.TP != null) { $("cm-tp").textContent = miles(cm.TP); $("cm-fn").textContent = miles(cm.FN); $("cm-fp").textContent = miles(cm.FP); $("cm-tn").textContent = miles(cm.TN); }
+  }
+
+  function conectar() {
+    conectado = false; submit.disabled = true;
+    document.querySelectorAll(".chip").forEach(function (b) { b.disabled = true; });
+    estado("waking", "Conectando con la API");
+    $("form-msg").textContent = "Esperando conexión con la API.";
+    var aviso = setTimeout(function () {
+      estado("waking", "Despertando la API (hasta 1 minuto)");
+      $("form-msg").textContent = "La API estuvo inactiva y se está encendiendo. Puede tardar hasta un minuto.";
+    }, 4000);
+    pedir("/info", {}, TIEMPO_MAXIMO_MS)
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (info) {
+        clearTimeout(aviso);
+        prepararFormulario(info); mostrarMetricas(info);
+        conectado = true; submit.disabled = false;
+        document.querySelectorAll(".chip").forEach(function (b) { b.disabled = false; });
+        estado("ok", "API conectada · modelo " + (info.modelo || "") );
+        $("form-msg").textContent = "";
+      })
+      .catch(function () {
+        clearTimeout(aviso);
+        estado("error", "Sin conexión con la API");
+        $("form-msg").innerHTML = 'No pudimos conectar con la API. <button type="button" class="chip" id="retry">Reintentar</button>';
+        $("retry").addEventListener("click", conectar);
+      });
+  }
+
+  // ---------- Validación en la página ----------
+  function marcar(campo, msg) {
+    var f = $("f-" + campo); if (!f) return;
+    f.classList.toggle("invalid", !!msg); f.querySelector(".err").textContent = msg || "";
+  }
+  function limpiarErrores() { Object.keys(CAMPOS).forEach(function (k) { marcar(k, ""); }); }
+
+  function leerFormulario() {
+    limpiarErrores();
+    var ok = true, f = $("fecha").value, lat = $("latitud").value.trim().replace(",", "."), lon = $("longitud").value.trim().replace(",", ".");
+    if (!f) { marcar("fecha", "Elegí una fecha."); ok = false; }
+    else if (f < "2019-01-01" || f > $("fecha").max) { marcar("fecha", "La fecha debe estar entre 2019 y hoy."); ok = false; }
+    if ((lat === "") !== (lon === "")) { marcar(lat === "" ? "latitud" : "longitud", "Completá latitud y longitud, o ninguna."); ok = false; }
+    if (lat !== "" && isNaN(Number(lat))) { marcar("latitud", "Tiene que ser un número, por ejemplo -34.60."); ok = false; }
+    if (lon !== "" && isNaN(Number(lon))) { marcar("longitud", "Tiene que ser un número, por ejemplo -58.43."); ok = false; }
+    if (!ok) return null;
+    return {
+      fecha: f, hora: Number($("hora").value),
+      comuna: $("comuna").value === "" ? null : Number($("comuna").value),
+      tipo_de_via: $("tipo_de_via").value, modo_victima: $("modo_victima").value, contraparte: $("contraparte").value,
+      latitud: lat === "" ? null : Number(lat), longitud: lon === "" ? null : Number(lon)
+    };
+  }
+
+  // ---------- Resultado ----------
+  function mostrarResultado(entrada, r) {
+    var alerta = r.clasificacion === "GRAVE_O_MORTAL";
+    var u = r.umbral, p = r.puntaje_gravedad;
+    var factores = (r.asociaciones_generales || []).map(function (a) { return "<li>" + esc(a) + "</li>"; }).join("");
+    var adv = (r.advertencias || []).map(function (a) { return '<div class="warn">' + esc(a) + "</div>"; }).join("");
+    resultBox.innerHTML =
+      '<div class="verdict ' + (alerta ? "alert" : "ok") + '">' +
+        "<small>" + (alerta ? "Grave o mortal" : "Leve") + "</small>" +
+        "<h3>" + esc(r.etiqueta) + "</h3>" +
+        "<p>" + (alerta ? "El puntaje supera el umbral: el caso se parece a los siniestros que terminaron graves." : "El puntaje queda debajo del umbral: el caso se parece a los siniestros leves.") + "</p>" +
+      "</div>" +
+      '<div class="scale-label"><span>Puntaje de gravedad</span><b>' + dec(p, 2) + "</b></div>" +
+      '<div class="scale" role="img" aria-label="Puntaje ' + dec(p, 2) + " sobre 1, umbral " + dec(u, 2) + '"><div class="fill" style="width:0"></div><div class="thr" style="left:calc(' + (u * 100) + '% - 1px)"></div></div>' +
+      '<div class="scale-ticks"><span style="left:0">0</span><span class="thr-label" style="left:' + (u * 100) + '%">umbral ' + dec(u, 2) + '</span><span style="left:100%">1</span></div>' +
+      (factores ? '<div class="r-section"><h4>Qué se asocia con más gravedad en este caso</h4><ul>' + factores + "</ul></div>" : "") +
+      (adv ? '<div class="r-section"><h4>Advertencias</h4>' + adv + "</div>" : "") +
+      '<p class="note">' + esc(r.nota_puntaje || "") + " Herramienta de apoyo para priorizar: no reemplaza la evaluación de una emergencia.</p>" +
+      '<details class="raw"><summary>Ver lo que viajó entre la página y la API</summary><div class="raw-grid">' +
+        '<div><div class="raw-title">POST /predecir · enviado</div><pre>' + esc(JSON.stringify(entrada, null, 2)) + "</pre></div>" +
+        '<div><div class="raw-title">Respuesta de la API</div><pre>' + esc(JSON.stringify(r, null, 2)) + "</pre></div>" +
+      "</div></details>";
+    requestAnimationFrame(function () { requestAnimationFrame(function () { resultBox.querySelector(".fill").style.width = Math.min(100, p * 100) + "%"; }); });
+  }
+
+  function mostrarError(titulo, detalles) {
+    resultBox.innerHTML = '<div class="error-box"><b>' + esc(titulo) + "</b>" + (detalles && detalles.length ? "<ul>" + detalles.map(function (d) { return "<li>" + esc(d) + "</li>"; }).join("") + "</ul>" : "") + "</div>";
+  }
+
+  function erroresDeLaApi(detail) {
+    if (detail && detail.errores) return detail.errores.map(function (e) { return (CAMPOS[e.campo] || e.campo) + ': "' + e.valor + '" no es un valor válido.'; });
+    if (Array.isArray(detail)) return detail.map(function (e) {
+      var campo = e.loc ? e.loc[e.loc.length - 1] : ""; marcar(campo, e.msg);
+      return (CAMPOS[campo] || campo) + ": " + e.msg;
+    });
+    return [typeof detail === "string" ? detail : "Revisá los datos ingresados."];
+  }
+
+  function evaluar(entrada) {
+    form.classList.add("loading"); submit.disabled = true; $("submit-text").textContent = "Consultando el modelo";
+    var lento = setTimeout(function () { $("form-msg").textContent = "La API está tardando más de lo normal; puede estar despertando."; }, 5000);
+    pedir("/predecir", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(entrada) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { return { status: r.status, data: d }; }); })
+      .then(function (res) {
+        if (res.status === 200) mostrarResultado(entrada, res.data);
+        else if (res.status === 422) mostrarError("La API rechazó algunos datos", erroresDeLaApi(res.data.detail));
+        else if (res.status === 503) mostrarError("El modelo no está disponible en este momento. Probá de nuevo en unos segundos.");
+        else mostrarError("No pudimos evaluar el siniestro (error " + res.status + ").");
+      })
+      .catch(function () { mostrarError("No hubo respuesta de la API. Revisá la conexión y volvé a intentar."); })
+      .finally(function () {
+        clearTimeout(lento); form.classList.remove("loading"); submit.disabled = !conectado;
+        $("submit-text").textContent = "Evaluar siniestro"; $("form-msg").textContent = "";
+        if (window.matchMedia("(max-width: 900px)").matches) resultBox.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+  }
+
+  form.addEventListener("submit", function (ev) {
+    ev.preventDefault(); if (!conectado) return;
+    var entrada = leerFormulario(); if (entrada) evaluar(entrada);
+  });
+
+  document.querySelectorAll(".chip[data-ejemplo]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var e = EJEMPLOS[b.dataset.ejemplo];
+      $("fecha").value = e.fecha; $("hora").value = String(e.hora); $("comuna").value = e.comuna;
+      $("tipo_de_via").value = e.tipo_de_via; $("modo_victima").value = e.modo_victima; $("contraparte").value = e.contraparte;
+      $("latitud").value = ""; $("longitud").value = "";
+      form.requestSubmit();
+    });
+  });
+
+  $("docs-link").href = API + "/docs";
+  $("docs-link").textContent = API ? API.replace(/^https?:\/\//, "") + "/docs" : "/docs";
+  conectar();
+})();
+</script>
+</body>
+</html>
